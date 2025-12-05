@@ -1,42 +1,44 @@
-class Board
-  attr_reader :min_position, :max_position
-
-  def initialize
-    @min_position = 0
-    @max_position = 7
-  end
-end
-
 class Knight
-  attr_accessor :x, :y
+  MOVES = [
+    [1, 2], [2, 1], [-1, 2], [-2, 1],
+    [1, -2], [2, -1], [-1, -2], [-2, -1]
+  ]
 
-  def initialize(x = 0, y = 0)
-    @position = [x, y]
-    @board = Board.new
-    @possible_moves = []
-  end
-
-  def valid_position?(position)
+  def self.valid_position?(position)
     x, y = position
-
-    x.between?(@board.min_position, @board.max_position) &&
-      y.between?(@board.min_position, @board.max_position)
+    x.between?(0, 7) && y.between?(0, 7)
   end
 
-  def possible_positions
-    x, y = @position
+  def self.possible_moves(position)
+    x, y = position
+    MOVES.map { |delta_x, delta_y| [x + delta_x, y + delta_y] }
+         .select { |new_position| valid_position?(new_position) }
+  end
 
-    deltas = [
-      [1, 2],  [2, 1],   [-1, 2],  [-2, 1],
-      [1, -2], [2, -1],  [-1, -2], [-2, -1]
-    ]
+  def knight_moves(start_position, target_position)
+    queue = [start_position]
+    visited = { start_position => true }
+    parents = {}
 
-    deltas.map { |delta_x, delta_y| [x + delta_x, y + delta_y] }
-          .select { |new_position| valid_position?(new_position) }
+    until queue.empty?
+      current = queue.shift
+
+      break if current == target_position
+
+      Knight.possible_moves(current).each do |move|
+        next if visited[move]
+
+        visited[move] = true
+        parents[move] = current
+        queue << move
+      end
+    end
+
+    path = [target_position]
+    path << parents[path.last] until path.last == start_position
+    path.reverse
   end
 end
 
-knight = Knight.new(0, 0)
-p knight.possible_positions
-knight2 = Knight.new(4, 4)
-p knight2.possible_positions
+knight = Knight.new
+p knight.knight_moves([0, 0], [3, 3])
